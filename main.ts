@@ -2,7 +2,7 @@
 // program writes those exact bytes to /output/entry.png.
 // Node 22, standard library only. No network, no randomness: running it
 // twice produces the same bytes.
-import { copyFileSync, existsSync } from 'node:fs';
+import { copyFileSync, existsSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,7 +18,13 @@ function main(): void {
   if (!existsSync(source)) {
     throw new Error(`missing ${IMAGE_NAME} beside main.ts`);
   }
-  copyFileSync(source, join(outputDir(), IMAGE_NAME));
+  const target = join(outputDir(), IMAGE_NAME);
+  copyFileSync(source, target);
+  const written = existsSync(target) ? statSync(target).size : -1;
+  if (written !== statSync(source).size) {
+    throw new Error(`failed to write ${target}`);
+  }
+  console.log(`wrote ${target} (${written} bytes)`);
 }
 
 main();
